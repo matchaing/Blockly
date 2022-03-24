@@ -1,0 +1,8 @@
+command
+takeoff
+down 20
+up 20
+flip l
+flip r
+stop
+land
