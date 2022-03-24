@@ -56,3 +56,16 @@ Blockly.JavaScript['flip'] = function(block) {
     var code = '...;\n';
     return code;
 };
+
+Blockly.JavaScript['stop'] = function(block) {
+    // TODO: Assemble JavaScript into code variable.
+    var code = '...;\n';
+    return code;
+};
+
+Blockly.JavaScript['wait'] = function(block) {
+    var number_name = block.getFieldValue('NAME');
+    // TODO: Assemble JavaScript into code variable.
+    var code = '...;\n';
+    return code;
+};

@@ -77,3 +77,29 @@ Blockly.Blocks['flip'] = {
         this.setHelpUrl("");
     }
 };
+
+Blockly.Blocks['stop'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("Stop");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(240);
+        this.setTooltip("");
+        this.setHelpUrl("");
+    }
+};
+
+Blockly.Blocks['wait'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("Wait")
+            .appendField(new Blockly.FieldNumber(0, 1, 120), "NAME")
+            .appendField("s");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(240);
+        this.setTooltip("wait");
+        this.setHelpUrl("");
+    }
+};
