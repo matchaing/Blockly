@@ -1,16 +1,22 @@
+from multiprocessing import synchronize
+import os
+import signal
 import socket
 import threading
 import time
 from stats import Stats
+import sys
+ 
+lock = threading.Lock()
 
 
 class Tello:
     def __init__(self):
         self.local_ip = ''
         self.local_port = 8889
-        self.socket = socket.socket(
-            socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
         self.socket.bind((self.local_ip, self.local_port))
+        print(self.socket)
 
         # thread for receiving cmd ack
         self.receive_thread = threading.Thread(target=self._receive_thread)
@@ -24,19 +30,11 @@ class Tello:
 
         self.MAX_TIME_OUT = 15.0
 
-    # def return_response(self):
-    #     self.response, ip = self.socket.recvfrom(1024)
-    #     response_str = (self.response).decode('utf-8')
-    #     return response_str
 
-    # def tello_close(self):
-    #     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     self.socket.close()
+    def tello_close(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.close()
 
-    # def tello_get_data(self):
-    #     self.response, ip = self.socket.recvfrom(1024, 0)
-    #     data_str = self.response.decode('utf-8')
-    #     return data_str
 
     def send_command(self, command):
         """
@@ -49,7 +47,6 @@ class Tello:
         :return: The latest command response
         """
         self.log.append(Stats(command, len(self.log)))
-
         self.socket.sendto(command.encode('utf-8'), self.tello_adderss)
         print('sending command: %s to %s' % (command, self.tello_ip))
 
@@ -64,6 +61,7 @@ class Tello:
                 return
         print('Done!!! sent command: %s to %s' % (command, self.tello_ip))
 
+
     def _receive_thread(self):
         """Listen to responses from the Tello.
 
@@ -73,20 +71,25 @@ class Tello:
         while True:
             try:
                 self.response, ip = self.socket.recvfrom(1024)
-                print('from %s: %s' % (ip, self.response))
+                # print('from %s: %s' % (ip, self.response))
 
                 self.log[-1].add_response(self.response)
-
-                # result = self.response.decode('utf-8')
             except socket.error as exc:
                 print("Caught exception socket.error : %s" % exc)
-            # return result
 
     def on_close(self):
-        pass
+        # pass
         # for ip in self.tello_ip_list:
         #     self.socket.sendto('land'.encode('utf-8'), (ip, 8889))
         # self.socket.close()
+        #self.socket.sendto('land'.encode('utf-8'), self.tello_adderss)
+        lock.acquire()
+        self.send_command('land')
+        sys.exit()
+        lock.release()
+        # os.kill(os.getpid(), signal.SIGINT)
+
 
     def get_log(self):
         return self.log
+
