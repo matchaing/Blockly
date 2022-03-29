@@ -2,12 +2,13 @@ import threading
 from time import sleep
 from flask import Flask, request, render_template
 from flask_cors import CORS
+import logging
 import json
-import os
-import signal
+# import os
+# import signal
 from tello import Tello
 from pymongo import MongoClient
-import sys
+# import sys
 
 
 # flask 객체 인스턴스 생성
@@ -19,11 +20,39 @@ connection_bool = False
 stop_bool = False
 lock = threading.Lock()
 
+# logger 생성
+logger = logging.getLogger('log_test')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# formatter = logging.Formatter(
+#     "%(asctime)s - %(levelname)s - %(message)s")
+max_byte = 10 * 1024
+
+
+fileHandler_debug = logging.FileHandler('debug.log')
+fileHandler_debug.setLevel(logging.DEBUG)
+fileHandler_debug.setFormatter(formatter)
+
+fileHandler_warning = logging.FileHandler('warning.log')
+fileHandler_warning.setLevel(logging.WARNING)
+fileHandler_warning.setFormatter(formatter)
+
+logger.addHandler(fileHandler_debug)
+logger.addHandler(fileHandler_warning)
+
+# 순서대로 5 -> 1단계
+logger.debug("debug")
+logger.info("info")
+logger.warning("warning")
+logger.error("error")
+logger.critical("critical")
+
 
 def connection():
     # 연결 된 텔로에 'command' 명령 보냄
     # tello.send_command('command')  # Enter SDK Mode, 전송된 바이트 수를 리턴(command:7)
-    #response = tello.response.decode('utf-8')
+    # response = tello.response.decode('utf-8')
     response = 'ok'
     if response == 'ok':
         connection_string = '연결되었습니다.'
@@ -47,10 +76,11 @@ def connection():
 def get_battery():
     tello.send_command('battery?')
     current_battery = tello.response.decode('utf-8')
-    #current_battery = str(60)
+    # current_battery = str(60)
     return current_battery
 
-@app.route('/mongo', methods=['POST'])
+
+@ app.route('/mongo', methods=['POST'])
 def mongoTest():
     client = MongoClient('mongodb://localhost:127.0.0.1/')
     db = client.newDatabase
@@ -60,7 +90,7 @@ def mongoTest():
     return render_template("index.html", data=results)
 
 
-@app.route("/", methods=['GET', 'POST'])
+@ app.route("/", methods=['GET', 'POST'])
 def test():
     try:
 
@@ -76,11 +106,10 @@ def test():
 
             elif request.args.get('id') == 'stop':
                 # disconnection()
-                #tello.send_command('land')
+                # tello.send_command('land')
                 # stop_bool = True
                 tello.on_close()
                 # tello.send_command('land')
-
 
             elif request.args.get('id') == 'battery':
                 battery = get_battery().strip()
@@ -98,7 +127,6 @@ def test():
         print("Exception")
         stop_bool = False
         tello.on_close()
-
 
     return render_template('index.html')
 
@@ -139,7 +167,8 @@ def json_blocks_if(jsonArray):
 # for 문
 def json_blocks_for(jsonArray):
     name = jsonArray.get('type')
-    value = list(jsonArray.get("inputs").get("TIMES").get("block").get("fields").values())
+    value = list(jsonArray.get("inputs").get(
+        "TIMES").get("block").get("fields").values())
 
     num = list_to_int(value)
     print(name, num)  # 드론에 안 보내도 됨
@@ -150,7 +179,7 @@ def json_blocks_for(jsonArray):
 
 
 def wait(sec):
-    print("Wait " , sec , "sec")
+    print("Wait ", sec, "sec")
     sleep(int(sec))
 
 
@@ -190,40 +219,39 @@ def json_parse(data):
 
     # try:
 
-        jsonObject = json.loads(data)
-        jsonArray = jsonObject.get("blocks").get('blocks')
-        for word in jsonArray:
-            if word.get("type") == "controls_repeat_ext":
-                json_blocks_for(word)
-                print("")
-            elif word.get("type") == "controls_if":
-                json_blocks_if(word)
-            elif word.get("type") == "flight_move":
-                command = list_save(list(word.get("fields").values()))
-            elif word.get("type") == "wait":
-                command = ''
-                val = list_save(list(word.get("fields").values()))
-                wait(val)
-            else:
-                if word.get("fields") is not None:
-                    val = list_save(list(word.get("fields").values()))
-                    command = word.get('type') + ' ' + val
-                else:
-                    command = word.get('type')
-
-            print(command)
-            if command != '':
-                tello.send_command(command)
-
-            if word.get("next") is not None:
-                json_blocks_parse(word.get("next"))
+    jsonObject = json.loads(data)
+    jsonArray = jsonObject.get("blocks").get('blocks')
+    for word in jsonArray:
+        if word.get("type") == "controls_repeat_ext":
+            json_blocks_for(word)
             print("")
-    # except 
+        elif word.get("type") == "controls_if":
+            json_blocks_if(word)
+        elif word.get("type") == "flight_move":
+            command = list_save(list(word.get("fields").values()))
+        elif word.get("type") == "wait":
+            command = ''
+            val = list_save(list(word.get("fields").values()))
+            wait(val)
+        else:
+            if word.get("fields") is not None:
+                val = list_save(list(word.get("fields").values()))
+                command = word.get('type') + ' ' + val
+            else:
+                command = word.get('type')
+
+        print(command)
+        if command != '':
+            tello.send_command(command)
+
+        if word.get("next") is not None:
+            json_blocks_parse(word.get("next"))
+        print("")
+    # except
 
 
 class stopError(Exception):
     pass
-
 
 
 if __name__ == "__main__":

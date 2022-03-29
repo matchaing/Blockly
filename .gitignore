@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# log 확장자 파일 제외
+*.log
+
 # Distribution / packaging
 .Python
 build/
