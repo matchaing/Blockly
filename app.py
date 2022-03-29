@@ -24,11 +24,8 @@ lock = threading.Lock()
 logger = logging.getLogger('log_test')
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-# formatter = logging.Formatter(
-#     "%(asctime)s - %(levelname)s - %(message)s")
-max_byte = 10 * 1024
-
+    "%(asctime)s - %(name)s - %(levelname)s -" u"%(message)s")
+# max_byte = 10 * 1024
 
 fileHandler_debug = logging.FileHandler('debug.log')
 fileHandler_debug.setLevel(logging.DEBUG)
@@ -41,25 +38,26 @@ fileHandler_warning.setFormatter(formatter)
 logger.addHandler(fileHandler_debug)
 logger.addHandler(fileHandler_warning)
 
-# 순서대로 5 -> 1단계
-logger.debug("debug")
-logger.info("info")
-logger.warning("warning")
-logger.error("error")
-logger.critical("critical")
+# 메모용 - 위에서부터 순서대로 위험도가 5 -> 1단계
+# logger.debug("debug")
+# logger.info("info")
+# logger.warning("warning")
+# logger.error("error")
+# logger.critical("critical")
 
 
 def connection():
     # 연결 된 텔로에 'command' 명령 보냄
     # tello.send_command('command')  # Enter SDK Mode, 전송된 바이트 수를 리턴(command:7)
     # response = tello.response.decode('utf-8')
-    response = 'ok'
+    response = 'error'
     if response == 'ok':
         connection_string = '연결되었습니다.'
         print(connection_string)
     else:
         connection_string = '연결 오류 '
         print(connection_string + str(response))
+        logger.error(connection_string + str(response))
     return connection_string
 
 
@@ -125,6 +123,7 @@ def test():
                     json_parse(json_obj)
     except stopError as e:
         print("Exception")
+        logger.info("Stop Exception")
         stop_bool = False
         tello.on_close()
 
