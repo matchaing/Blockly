@@ -48,9 +48,9 @@ logger.addHandler(fileHandler_warning)
 
 def connection():
     # 연결 된 텔로에 'command' 명령 보냄
-    # tello.send_command('command')  # Enter SDK Mode, 전송된 바이트 수를 리턴(command:7)
-    # response = tello.response.decode('utf-8')
-    response = 'error'
+    tello.send_command('command')  # Enter SDK Mode, 전송된 바이트 수를 리턴(command:7)
+    response = tello.response.decode('utf-8')
+    # response = 'ok'
     if response == 'ok':
         connection_string = '연결되었습니다.'
         print(connection_string)
