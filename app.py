@@ -4,11 +4,11 @@ from flask import Flask, request, render_template
 from flask_cors import CORS
 import logging
 import json
-# import os
-# import signal
+import os
+import signal
 from tello import Tello
 from pymongo import MongoClient
-# import sys
+import sys
 
 
 # flask 객체 인스턴스 생성
@@ -17,8 +17,6 @@ CORS(app)
 
 tello = Tello()  # 객체 생성. 소켓 연결 됨
 connection_bool = False
-stop_bool = False
-lock = threading.Lock()
 
 # logger 생성
 logger = logging.getLogger('log_test')
@@ -44,6 +42,40 @@ logger.addHandler(fileHandler_warning)
 # logger.warning("warning")
 # logger.error("error")
 # logger.critical("critical")
+
+
+@ app.route("/", methods=['GET', 'POST'])
+def test():
+    res = request.args.get('id')
+    print(request.method, res)
+    global connection_bool
+    if request.method == 'GET':
+        if request.args.get('id') == 'connect':
+            connection_bool = True
+            connection_string = connection()
+            connection_string = '연결되었습니다.'
+            return connection_string
+
+        elif request.args.get('id') == 'disconnect':
+            os.kill(os.getpid(), signal.SIGINT)
+            # disconnection()
+            # tello.on_close()
+            # tello.send_command('land')
+
+        elif request.args.get('id') == 'battery':
+            battery = get_battery().strip()
+            return battery
+
+    elif request.method == 'POST':
+        if connection_bool:
+            params = request.get_json()
+            if params is None or params == {}:
+                print('오류')
+            else:
+                json_obj = json.dumps(params)
+                json_parse(json_obj)
+
+    return render_template('index.html')
 
 
 def connection():
@@ -78,56 +110,14 @@ def get_battery():
     return current_battery
 
 
-@ app.route('/mongo', methods=['POST'])
-def mongoTest():
-    client = MongoClient('mongodb://localhost:127.0.0.1/')
-    db = client.newDatabase
-    collection = db.mongoTest
-    results = collection.find()
-    client.close()
-    return render_template("index.html", data=results)
-
-
-@ app.route("/", methods=['GET', 'POST'])
-def test():
-    try:
-
-        res = request.args.get('id')
-        print(request.method, res)
-        global connection_bool
-        if request.method == 'GET':
-            if request.args.get('id') == 'connect':
-                connection_bool = True
-                connection_string = connection()
-                connection_string = '연결되었습니다.'
-                return connection_string
-
-            elif request.args.get('id') == 'stop':
-                # disconnection()
-                # tello.send_command('land')
-                # stop_bool = True
-                tello.on_close()
-                # tello.send_command('land')
-
-            elif request.args.get('id') == 'battery':
-                battery = get_battery().strip()
-                return battery
-
-        elif request.method == 'POST':
-            if connection_bool:
-                params = request.get_json()
-                if params is None or params == {}:
-                    print('오류')
-                else:
-                    json_obj = json.dumps(params)
-                    json_parse(json_obj)
-    except stopError as e:
-        print("Exception")
-        logger.info("Stop Exception")
-        stop_bool = False
-        tello.on_close()
-
-    return render_template('index.html')
+# @ app.route('/mongo', methods=['POST'])
+# def mongoTest():
+#     client = MongoClient('mongodb://localhost:127.0.0.1/')
+#     db = client.newDatabase
+#     collection = db.mongoTest
+#     results = collection.find()
+#     client.close()
+#     return render_template("index.html", data=results)
 
 
 def list_to_int(li):
@@ -193,8 +183,8 @@ def json_blocks_parse(data):
         json_blocks_if(jsonArray)
     elif jsonArray.get("type") == "flight_move":
         command = list_save(list(jsonArray.get("fields").values()))
-        tello.send_command(command)
         print(command)
+        tello.send_command(command)
     elif jsonArray.get("type") == "wait":
         command = ''
         val = list_save(list(jsonArray.get("fields").values()))
@@ -206,18 +196,16 @@ def json_blocks_parse(data):
         else:
             command = name
 
-    print(command)
-    if command != '':
-        tello.send_command(command)
+        # tello.send_command(command)
+        print(command)
+        if command != '':
+            tello.send_command(command)
 
     if jsonArray.get("next") is not None:
         json_blocks_parse(jsonArray.get("next"))
 
 
 def json_parse(data):
-
-    # try:
-
     jsonObject = json.loads(data)
     jsonArray = jsonObject.get("blocks").get('blocks')
     for word in jsonArray:
@@ -246,11 +234,6 @@ def json_parse(data):
         if word.get("next") is not None:
             json_blocks_parse(word.get("next"))
         print("")
-    # except
-
-
-class stopError(Exception):
-    pass
 
 
 if __name__ == "__main__":

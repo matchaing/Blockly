@@ -285,7 +285,7 @@
       flag = !flag;
       btn.innerHTML = flag ? 'Connect' : 'Disconnect';
       if(btn.innerHTML == 'Disconnect'){
-        const html = '<div style="color:red"> Disconnect </div>';
+        const html = '<div style="color:red"> Quit </div>';
         btn.innerHTML = html;
 
         $.ajax({
@@ -336,7 +336,7 @@
       // a.click();
       // document.body.removeChild(a);
     }
-  
+
     function save(){  
       var json = Blockly.serialization.workspaces.save(demoWorkspace);
       var obj_s = JSON.stringify(json, null, "\t");
