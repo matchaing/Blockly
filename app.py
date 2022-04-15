@@ -1,6 +1,8 @@
+# from crypt import methods
+import subprocess
 import threading
 from time import sleep
-from flask import Flask, request, render_template
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import logging
 import json
@@ -17,6 +19,7 @@ CORS(app)
 
 tello = Tello()  # 객체 생성. 소켓 연결 됨
 connection_bool = False
+output = ''
 
 # logger 생성
 logger = logging.getLogger('log_test')
@@ -119,10 +122,24 @@ def get_battery():
 #     client.close()
 #     return render_template("index.html", data=results)
 
+# @app.route('/update', methods=['POST'])
+# def update():
+#     return jsonify({
+#         'output': output,
+#     })
+
+
+
+def returnCommand(text):
+    return text
 
 def list_to_int(li):
     for word in li:
         return int(word)
+
+def get_build_version():
+	out = subprocess.Popen('ls -al', shell=True, stdout=subprocess.PIPE).stdout 
+	return out.readline()
 
 
 def list_save(li):
@@ -179,6 +196,7 @@ def json_blocks_parse(data):
     name = jsonArray.get("type")
     if jsonArray.get("type") == "controls_repeat_ext":
         json_blocks_for(jsonArray)
+        command = ''
     elif jsonArray.get("type") == "controls_if":
         json_blocks_if(jsonArray)
     elif jsonArray.get("type") == "flight_move":
@@ -198,6 +216,7 @@ def json_blocks_parse(data):
 
         # tello.send_command(command)
         print(command)
+        output = command
         if command != '':
             tello.send_command(command)
 
@@ -212,6 +231,7 @@ def json_parse(data):
         if word.get("type") == "controls_repeat_ext":
             json_blocks_for(word)
             print("")
+            command = ''
         elif word.get("type") == "controls_if":
             json_blocks_if(word)
         elif word.get("type") == "flight_move":
@@ -228,6 +248,7 @@ def json_parse(data):
                 command = word.get('type')
 
         print(command)
+        output = command
         if command != '':
             tello.send_command(command)
 
