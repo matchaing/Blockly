@@ -352,29 +352,36 @@
       // document.body.removeChild(a);
     }
 
+    // save 
+
     function save(){  
       var json = Blockly.serialization.workspaces.save(demoWorkspace);
       var obj_s = JSON.stringify(json, null, "\t");
       console.log(window.localStorage.length);
       var input = prompt('key 값을 입력해주세요.');
-      if(input != "" && window.localStorage.getItem(input)==null){
+      
+      if(empty(input) == true) {
+        alert("잘못된 key 값 입니다.")
+      }
+
+      else if(window.localStorage.getItem(input)==null){
           window.localStorage.setItem(input, obj_s);
           console.log("key 값 : ", input, " 에 블록이 저장되었습니다.");
+          alert("key 값 : " + input + " 에 블록이 저장되었습니다.")
       }
-      else if(input == "") {
-        console.log("잘못된 key 값 입니다.")
-      }
+    
       else{
         var check = confirm('동일한 key 값이 존재합니다. 덮어씌우겠습니까?');
         if (check === true){
           window.localStorage.setItem(input, obj_s);
           console.log(input, "에 덮어씌어졌습니다.")
+          alert(input + "에 덮어씌어졌습니다.")
         } else {
-          console.log("다른 key 값을 입력해주세요.");
+          alert("다른 key 값을 입력해주세요.");
         }
       }
     }
-  
+
     function load(){
       var keys = new Array();
       for(let i=0; i<window.localStorage.length; i++){
@@ -382,14 +389,19 @@
       }
       keys = String(keys)
       console.log("현재 존재하는 key 값:", keys)
-      var input = prompt('key 목록: '+keys, '불러올 블럭의 key 값을 입력해주세요.');
+      var input = prompt('key 목록: '+keys, +"\n불러올 블럭의 key 값을 입력해주세요.");
       if(window.localStorage.getItem(input)){
           obj = JSON.parse(window.localStorage.getItem(input));
           Blockly.serialization.workspaces.load(obj, demoWorkspace);
-          console.log("key 값 : ", input, " 의 블럭을 불러왔습니다");
+          console.log("key 값 : " + input + " 의 블럭을 불러왔습니다");
+          alert("key 값 : " + input + " 의 블럭을 불러왔습니다")
         }
+      else if(empty(input) == true){  // save 취소 누르면 key - null,공백 되는 거 수정
+        alert("잘못된 key 값 입니다.")
+      }
+
       else
-          console.log("key 값이 존재 하지 않거나 잘못입력하였습니다."); 
+          alert("key 값이 존재 하지 않거나 잘못입력하였습니다."); 
     }
     function remove(){
       var keys = new Array();
@@ -398,19 +410,47 @@
       }
       keys = String(keys);
       console.log("현재 존재하는 key 값:", keys);
-      var input = prompt('key 목록: '+keys, '삭제할 블럭의 key 값을 입력해주세요.');
-      if(window.localStorage.getItem(input)){
-        window.localStorage.removeItem(input);
-        console.log(input, "이 삭제되었습니다.");
+      var input = prompt('key 목록: '+ keys + '\n삭제할 블럭의 key 값을 입력해주세요.');
+
+      if(empty(input) == true){
+        console.log("잘못된 key 값 입니다.")
+        alert("잘못된 key 값 입니다.")
+      }
+
+      else if(window.localStorage.getItem(input)){
+        if(window.localStorage.getItem(input)){
+          window.localStorage.removeItem(input);
+          console.log(input, "이 삭제되었습니다.");
+          alert(input + "이 삭제되었습니다.")
+          console.log("현재 남은 블록" + window.localStorage.getItem)
+          }
+        else{
+          console.log("key가 존재하지 않습니다.")
+          alert("key가 존재하지 않습니다.")
+          }
         }
-      else
-        console.log("key가 존재하지 않습니다.")
     }
+
+    // null 공백 "" 등 확인
+    const empty = (value)=> {
+      //if(value === null) return true
+      if(typeof value === "undefined") return true
+      if (typeof value === 'string' && value === '') return true
+      if(Array.isArray(value) && value === '') return true
+      if(typeof value === 'object' && value.constructor.name == 'Object' && Object.keys(value).length < 1 && Object.getOwnPropertyNames(value) < 1)return true
+      if (typeof value === 'object' && value.constructor.name === 'String' && Object.keys(value).length < 1) return true // new String()
+      var pattern = /[\s]/g;
+      if(pattern.test(value) == true) return true
+
+      return false
+    }
+
     function block_clear(){
       var check = confirm('저장된 모든 블럭이 삭제됩니다. 삭제하시겠습니까?');
         if (check == true){
           window.localStorage.clear();
-          console.log('저장된 모든 블럭이 삭제되었습니다.')
+          alert('저장된 모든 블럭이 삭제되었습니다.')
+          console.log("현재 저장된 블럭의 개수 : " + window.localStorage.length)
         }
     }
     
